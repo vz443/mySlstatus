@@ -9,37 +9,6 @@ static const char unknown_str[] = "n/a";
 /* maximum output string length */
 #define MAXLEN 2048
 
-
-static time_t last_update = 0;
-
-const char *
-bitcoin_price(const char *unused)
-{
-    time_t current_time;
-    time(&current_time);
-
-    // Check if more than 3 minutes have passed since the last update
-    if ((current_time - last_update) >= 180) { // 180 seconds = 3 minutes
-        FILE *fp;
-        char buf[128];
-
-        fp = popen("curl -s 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd' | jq -r '.bitcoin.usd'", "r");
-        if (fp == NULL)
-            return NULL;
-
-        if (fgets(buf, sizeof(buf), fp) == NULL) {
-            pclose(fp);
-            return NULL;
-        }
-
-        pclose(fp);
-
-        // Update the last_update time
-        last_update = current_time;
-    }
-
-    return bprintf(buf);
-}
 /*
  * function            description                     argument (example)
  *
@@ -96,11 +65,13 @@ bitcoin_price(const char *unused)
  */
 static const struct arg args[] = {
 	/* function format          argument */
-  { ipv4, "[嬨 %s 嬨]   ", "tun0"		},
-  { bitcoin_price, "[BTC $%s]   ",  NULL },
-  { battery_perc, "[BAT  %s%%]   ", "BAT0" },
-  { run_command, "[BRI 󰃞 %s%%]   ", "cat /sys/class/backlight/amdgpu_bl1/brightness"},
-  { run_command, "[VOL 墳 %s]   ", "pactl list sinks | grep 'Volume: front-left' | awk '{print $5}'" },
-	{ ram_perc, "[RAM  %s%%]   ", NULL	      },
+    { ipv4, "[tun0: %s ]   ", "tun0"		},
+    { netspeed_tx, "[[NET] Up:%s ", "wlan0" },
+    { netspeed_rx, "Down:%s]   ",   "wlan0" },
+    { battery_perc, "[BAT %s%%", "BAT1" },
+    { battery_state, " State: %s]   ", "BAT1" },
+    { run_command, "[BRI  %s%%]   ", "cat /sys/class/backlight/amdgpu_bl1/brightness"},
+    { run_command, "[VOL  %s]   ", "pactl list sinks | grep 'Volume: front-left' | awk '{print $5}'" },
+	{ ram_perc, "[RAM  %s%%]   ", NULL	      },
 	{ datetime,		 "[ %s ]",           "%b %d %Y, %R" },
 };
